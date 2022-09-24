@@ -1,5 +1,4 @@
 import string
-import time
 from shazamio import Shazam, Serialize
 from spotipy.oauth2 import SpotifyOAuth
 import spotipy
@@ -37,7 +36,6 @@ async def getTrackID(songFile: string) -> string:
     songSearch = sp.search(q=f'artist: "{serialized.subtitle}" track: "{serialized.title}"', limit=1)
     return songSearch['tracks']['items'][0]['id']
 
-aa = time.perf_counter()
 playlistID = getPlaylistID(sp.current_user_playlists(limit=50))
 
 for dir, subdir, files in os.walk(SongDir):
@@ -48,5 +46,3 @@ for dir, subdir, files in os.walk(SongDir):
 print("Adding songs to playlist...")
 sp.playlist_add_items(playlistID, songs)
 print("Songs added!")
-
-print(time.perf_counter() - aa)
