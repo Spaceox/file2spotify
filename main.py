@@ -34,6 +34,7 @@ async def getTrackID(songFile: string) -> string:
     serialized = Serialize.track(data=out["track"])
     print(f"Recognized song: {serialized.subtitle} - {serialized.title}")
     songSearch = sp.search(q=f'artist: "{serialized.subtitle}" track: "{serialized.title}"', limit=1)
+    print(f"Song in Spotify: {songSearch['tracks']['items'][0]['artists'][0]['name']} - {songSearch['tracks']['items'][0]['name']}")
     return songSearch['tracks']['items'][0]['id']
 
 playlistID = getPlaylistID(sp.current_user_playlists(limit=50))
