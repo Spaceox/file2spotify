@@ -1,4 +1,4 @@
-# file2spotify
+# tune2spotify
  Convert your music files to Spotify tracks
 
 # Usage
