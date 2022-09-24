@@ -37,6 +37,14 @@ async def getTrackID(songFile: string) -> string:
     print(f"Song in Spotify: {songSearch['tracks']['items'][0]['artists'][0]['name']} - {songSearch['tracks']['items'][0]['name']}")
     return songSearch['tracks']['items'][0]['id']
 
+if not os.path.isdir(SongDir):
+    print(f"{SongDir} doesn't exist. Exiting...")
+    exit(1)
+
+if len(os.listdir(SongDir)) == 0:
+    print(f"{SongDir} is empty. Exiting...")
+    exit(1)
+
 playlistID = getPlaylistID(sp.current_user_playlists(limit=50))
 
 for dir, subdir, files in os.walk(SongDir):
