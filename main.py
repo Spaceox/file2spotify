@@ -1,3 +1,6 @@
+from csv import excel_tab
+from shutil import move
+from tokenize import Ignore
 from rich.progress import Progress, SpinnerColumn, TimeElapsedColumn
 from spotipy.oauth2 import SpotifyOAuth
 from shazamio import Shazam
@@ -54,13 +57,16 @@ def getPlaylistID(playlists: list) -> string:
 
 
 def moveFile(
-    dir: string, file: string, ignored: bool = False, recognized: bool = False
+    dir: string, file: string, ignored: bool = False, recognized: bool = False, exception: bool = False
 ) -> None:
     if ignored:
-        if recognized:
-            os.rename(f"{dir}{file}", f"{NotFoundDir}/{file}")
+        if exception:
+            os.rename(f"{dir}{file}", f"{IgnoredDir}/{file}")
         else:
-            os.rename(f"{dir}{file}", f"{UnknownDir}/{file}")
+            if recognized:
+                os.rename(f"{dir}{file}", f"{NotFoundDir}/{file}")
+            else:
+                os.rename(f"{dir}{file}", f"{UnknownDir}/{file}")
     else:
         os.rename(f"{dir}/{file}", f"{SuccessDir}/{file}")
 
@@ -131,27 +137,41 @@ paths = [f"{dir}/{f}" for dir, subdir, files in os.walk(SongDir) for f in files]
 with progressbar as prog:
     process = prog.add_task("[green]Processing...", total=len(paths), start=True)
     for f in paths:
-        trackID = asyncio.run(getTrackID(f))
-        if trackID == "0":
+        try:
+            trackID = asyncio.run(getTrackID(f))
+            if trackID == "0":
+                moveFile(
+                    f.replace("\\", "/")[: f.rfind("/")],
+                    f.replace("\\", "/")[f.rfind("/") :],
+                    True,
+                )
+            elif trackID == "1":
+                moveFile(
+                    f.replace("\\", "/")[: f.rfind("/")],
+                    f.replace("\\", "/")[f.rfind("/") :],
+                    True,
+                    True,
+                )
+            else:
+                songs.append(trackID)
+                moveFile(
+                    f.replace("\\", "/")[: f.rfind("/")],
+                    f.replace("\\", "/")[f.rfind("/") :],
+                )
+        except Exception as e:
+            progressbar.console.log(f"Exception occurred, file will be put into {IgnoredDir}\nException follows:\n{e}")
             moveFile(
-                f.replace("\\", "/")[: f.rfind("/")],
-                f.replace("\\", "/")[f.rfind("/") :],
-                True,
-            )
-        elif trackID == "1":
-            moveFile(
-                f.replace("\\", "/")[: f.rfind("/")],
-                f.replace("\\", "/")[f.rfind("/") :],
-                True,
-                True,
-            )
-        else:
-            songs.append(trackID)
-            moveFile(
-                f.replace("\\", "/")[: f.rfind("/")],
-                f.replace("\\", "/")[f.rfind("/") :],
-            )
+                    f.replace("\\", "/")[: f.rfind("/")],
+                    f.replace("\\", "/")[f.rfind("/") :],
+                    True,
+                    False,
+                    True,
+                )
         prog.update(process, advance=1)
+        if len(songs) == 50:
+            progressbar.console.log("Adding songs to playlist...")
+            sp.playlist_add_items(playlistID, songs)
+            songs.clear()
 
 progressbar.console.log("Adding songs to playlist...")
 sp.playlist_add_items(playlistID, songs)
